@@ -13,4 +13,8 @@
     <string name="filepath">Filepath</string>
     <string name="media_count">Media Count</string>
     <string name="people">People</string>
+
+    <string name="api_key" translatable="false">api_key</string>
+    <string name="authentication_url" translatable="false">authentication_url</string>
+    <string name="host_name" translatable="false">host_name</string>
 </resources>
