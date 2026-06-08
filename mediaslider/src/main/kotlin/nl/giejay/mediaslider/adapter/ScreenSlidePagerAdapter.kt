@@ -9,7 +9,6 @@ import android.view.View.GONE
 import android.view.ViewGroup
 import android.widget.ProgressBar
 import android.widget.Toast
-import androidx.media3.ui.PlayerView
 import androidx.viewpager.widget.PagerAdapter
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.GlideException
@@ -20,10 +19,13 @@ import nl.giejay.mediaslider.config.MediaSliderConfiguration
 import nl.giejay.mediaslider.model.SliderItem
 import nl.giejay.mediaslider.model.SliderItemType
 import nl.giejay.mediaslider.model.SliderItemViewHolder
+import nl.giejay.mediaslider.util.Debouncer
 import nl.giejay.mediaslider.view.ExoPlayerListener
 import nl.giejay.mediaslider.view.ExoPlayerView
 import nl.giejay.mediaslider.view.TouchImageView
 import timber.log.Timber
+import java.util.concurrent.TimeUnit
+
 
 class ScreenSlidePagerAdapter(private val context: Context,
                               private var items: List<SliderItemViewHolder>,
@@ -66,6 +68,9 @@ class ScreenSlidePagerAdapter(private val context: Context,
             } else {
                 view = inflater.inflate(R.layout.image_item, container, false)
                 loadImageIntoView(view, R.id.mBigImage, position, model.mainItem)
+                if (config.zoomAndScrollPanorama){
+                    Debouncer.debounce("zoomAndScroll", { zoomAndScrollPanorama(model) }, 1, TimeUnit.SECONDS)
+                }
             }
         } else if (model.type == SliderItemType.VIDEO) {
             // Use texture view for vertical videos OR if this position previously failed with SurfaceView
@@ -135,6 +140,12 @@ class ScreenSlidePagerAdapter(private val context: Context,
                 .load(model.thumbnailUrl))
         }
         glideLoader.into(imageView!!)
+    }
+
+    private fun zoomAndScrollPanorama(model: SliderItemViewHolder) {
+        if (imageView != null && config.interval >= 10 && model.mainItem.isPanorama) {
+                imageView!!.zoomAndScrollPanorama(config, model)
+        }
     }
 
     override fun getCount(): Int {

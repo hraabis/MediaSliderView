@@ -26,7 +26,10 @@ import android.view.animation.AccelerateDecelerateInterpolator
 import android.widget.OverScroller
 import android.widget.Scroller
 import androidx.appcompat.widget.AppCompatImageView
+import androidx.core.graphics.values
 import com.zeuskartik.mediaslider.R
+import nl.giejay.mediaslider.config.MediaSliderConfiguration
+import nl.giejay.mediaslider.model.SliderItemViewHolder
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
@@ -1351,6 +1354,62 @@ class TouchImageView @JvmOverloads constructor(context: Context, attrs: Attribut
         val n = FloatArray(9)
         matrix!!.getValues(n)
         Log.d(DEBUG, "Scale: " + n[Matrix.MSCALE_X] + " TransX: " + n[Matrix.MTRANS_X] + " TransY: " + n[Matrix.MTRANS_Y])
+    }
+
+    public fun zoomAndScrollPanorama(config: MediaSliderConfiguration,model: SliderItemViewHolder) {
+        val matrixScale = matrix!!.values().get(0)
+        if (matrixScale > 0.9f && matrixScale < 1.1f)
+            return
+
+        val aspectRatio = imageWidth / imageHeight
+        val scaleUp = 1.0f / (matrixScale)
+        val xToLeft = (imageWidth * scaleUp) / 2
+        val xToRight = (imageWidth * scaleUp) - (viewWidth.toFloat() * 1.15f)
+        val yUp = (imageHeight * scaleUp) / 2
+        val yDown = (imageHeight * scaleUp) - (viewHeight.toFloat() * 2.5f)
+        val zoomDuration = ((config.interval - 1) * 0.1f * 1000).toLong()
+        val scrollDuration = ((config.interval - 1) * 0.8f * 1000).toLong()
+
+        val zoomHorizontalOutAction: Runnable = Runnable {
+            this@TouchImageView.animate()
+                .setDuration(zoomDuration)
+                .scaleY(1.0f).scaleX(1.0f)
+                .x(0.0f)
+        }
+        val zoomVerticalOutAction: Runnable = Runnable {
+            this@TouchImageView.animate()
+                .setDuration(zoomDuration)
+                .scaleY(1.0f).scaleX(1.0f)
+                .y(0.0f)
+        }
+
+        val scrollHorizontalAction: Runnable = Runnable {
+            this@TouchImageView.animate()
+                .setDuration(scrollDuration)
+                .x(xToRight)
+                .withEndAction(zoomHorizontalOutAction)
+        }
+
+        val scrollVerticalAction: Runnable = Runnable {
+            this@TouchImageView.animate()
+                .setDuration(scrollDuration)
+                .y(yDown)
+                .withEndAction(zoomVerticalOutAction)
+        }
+
+        if (aspectRatio > 2.0f) {
+            this@TouchImageView.animate()
+                .setDuration(zoomDuration)
+                .scaleY(scaleUp).scaleX(scaleUp)
+                .x(xToLeft * -1)
+                .withEndAction(scrollHorizontalAction)
+        }
+        else if (aspectRatio < 0.56f) {
+            this@TouchImageView.animate()
+                .setDuration(zoomDuration)
+                .scaleY(scaleUp).scaleX(scaleUp)
+                .y(yUp * -1)
+                .withEndAction(scrollVerticalAction)}
     }
 
     companion object {
