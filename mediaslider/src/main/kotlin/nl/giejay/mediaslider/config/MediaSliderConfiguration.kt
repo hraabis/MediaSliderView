@@ -2,13 +2,11 @@ package nl.giejay.mediaslider.config
 
 import android.os.Parcel
 import android.os.Parcelable
-import com.google.gson.reflect.TypeToken
 import nl.giejay.mediaslider.adapter.MetaDataItem
 import nl.giejay.mediaslider.model.SliderItemViewHolder
 import nl.giejay.mediaslider.transformations.GlideTransformations
 import nl.giejay.mediaslider.util.LoadMore
 import nl.giejay.mediaslider.util.MetaDataConverter
-import java.lang.reflect.Type
 
 
 class MediaSliderConfiguration : Parcelable {
