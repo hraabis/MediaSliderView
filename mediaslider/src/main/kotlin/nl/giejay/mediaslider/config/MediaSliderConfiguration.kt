@@ -24,6 +24,7 @@ class MediaSliderConfiguration : Parcelable {
     val metaDataConfig: List<MetaDataItem>
     private val gradiantOverlay: Boolean
     val enableSlideAnimation: Boolean
+    val zoomAndScrollPanorama: Boolean
 
     constructor(startPosition: Int,
                 interval: Int,
@@ -39,7 +40,8 @@ class MediaSliderConfiguration : Parcelable {
                 debugEnabled: Boolean,
                 gradiantOverlay: Boolean,
                 enableSlideAnimation: Boolean,
-                metaDataConfig: List<MetaDataItem>) {
+                metaDataConfig: List<MetaDataItem>,
+                zoomAndScrollPanorama: Boolean) {
         this.startPosition = startPosition
         this.interval = interval
         this.isOnlyUseThumbnails = onlyUseThumbnails
@@ -55,6 +57,7 @@ class MediaSliderConfiguration : Parcelable {
         this.debugEnabled = debugEnabled
         this.gradiantOverlay = gradiantOverlay
         this.enableSlideAnimation = enableSlideAnimation
+        this.zoomAndScrollPanorama = zoomAndScrollPanorama
     }
 
     private constructor(`in`: Parcel) {
@@ -70,6 +73,7 @@ class MediaSliderConfiguration : Parcelable {
         this.gradiantOverlay = `in`.readInt() == 1
         this.enableSlideAnimation = `in`.readInt() == 1
         metaDataConfig = MetaDataConverter.metaDataListFromJson(`in`.readString()!!)
+        zoomAndScrollPanorama = `in`.readByte().toInt() != 0
     }
 
     val isGradiantOverlayVisible: Boolean
@@ -104,6 +108,7 @@ class MediaSliderConfiguration : Parcelable {
         dest.writeInt(if (gradiantOverlay) 1 else 0)
         dest.writeInt(if (enableSlideAnimation) 1 else 0)
         dest.writeString(MetaDataConverter.metaDataListToJson(metaDataConfig))
+        dest.writeByte((if (zoomAndScrollPanorama) 1 else 0).toByte())
     }
 
     companion object {
