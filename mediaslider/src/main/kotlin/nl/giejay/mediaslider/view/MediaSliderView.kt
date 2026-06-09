@@ -17,9 +17,11 @@ import android.view.animation.DecelerateInterpolator
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.ListView
+import android.widget.RelativeLayout
 import android.widget.Toast
 import androidx.annotation.OptIn
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.view.children
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
@@ -369,6 +371,11 @@ class MediaSliderView(context: Context) : ConstraintLayout(context) {
                         }
                         if (slideShowPlaying) {
                             startTimerNextAsset()
+                            val viewTag = mPager.findViewWithTag<RelativeLayout>("view$sliderItemIndex") ?: return
+                            val touchImageView = viewTag.children.first() as? TouchImageView
+                            if (touchImageView!= null && config.zoomAndScrollPanorama && config.interval >= 10 && mainItem.isPanorama) {
+                                touchImageView.zoomAndScrollPanorama(config, sliderItem)
+                            }
                         }
                         stopPlayer()
                     }

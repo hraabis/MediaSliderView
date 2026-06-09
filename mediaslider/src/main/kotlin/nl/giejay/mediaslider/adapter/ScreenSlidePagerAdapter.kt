@@ -19,12 +19,10 @@ import nl.giejay.mediaslider.config.MediaSliderConfiguration
 import nl.giejay.mediaslider.model.SliderItem
 import nl.giejay.mediaslider.model.SliderItemType
 import nl.giejay.mediaslider.model.SliderItemViewHolder
-import nl.giejay.mediaslider.util.Debouncer
 import nl.giejay.mediaslider.view.ExoPlayerListener
 import nl.giejay.mediaslider.view.ExoPlayerView
 import nl.giejay.mediaslider.view.TouchImageView
 import timber.log.Timber
-import java.util.concurrent.TimeUnit
 
 
 class ScreenSlidePagerAdapter(private val context: Context,
@@ -67,10 +65,8 @@ class ScreenSlidePagerAdapter(private val context: Context,
                 loadImageIntoView(view, R.id.right_image, position, model.secondaryItem!!)
             } else {
                 view = inflater.inflate(R.layout.image_item, container, false)
+                view.tag = "view$position"
                 loadImageIntoView(view, R.id.mBigImage, position, model.mainItem)
-                if (config.zoomAndScrollPanorama){
-                    Debouncer.debounce("zoomAndScroll", { zoomAndScrollPanorama(model) }, 1, TimeUnit.SECONDS)
-                }
             }
         } else if (model.type == SliderItemType.VIDEO) {
             // Use texture view for vertical videos OR if this position previously failed with SurfaceView
@@ -140,12 +136,6 @@ class ScreenSlidePagerAdapter(private val context: Context,
                 .load(model.thumbnailUrl))
         }
         glideLoader.into(imageView!!)
-    }
-
-    private fun zoomAndScrollPanorama(model: SliderItemViewHolder) {
-        if (imageView != null && config.interval >= 10 && model.mainItem.isPanorama) {
-                imageView!!.zoomAndScrollPanorama(config, model)
-        }
     }
 
     override fun getCount(): Int {

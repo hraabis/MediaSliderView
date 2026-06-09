@@ -26,7 +26,6 @@ import android.view.animation.AccelerateDecelerateInterpolator
 import android.widget.OverScroller
 import android.widget.Scroller
 import androidx.appcompat.widget.AppCompatImageView
-import androidx.core.graphics.values
 import com.zeuskartik.mediaslider.R
 import nl.giejay.mediaslider.config.MediaSliderConfiguration
 import nl.giejay.mediaslider.model.SliderItemViewHolder
@@ -121,7 +120,6 @@ class TouchImageView @JvmOverloads constructor(context: Context, attrs: Attribut
 
     private fun configureImageView(context: Context, attrs: AttributeSet?, defStyleAttr: Int) {
         this.context = context
-
         super.setClickable(true)
 
         orientation = resources.configuration.orientation
@@ -1357,16 +1355,21 @@ class TouchImageView @JvmOverloads constructor(context: Context, attrs: Attribut
     }
 
     public fun zoomAndScrollPanorama(config: MediaSliderConfiguration,model: SliderItemViewHolder) {
-        val matrixScale = matrix!!.values().get(0)
-        if (matrixScale > 0.9f && matrixScale < 1.1f)
+        val aspectRatio = imageWidth / imageHeight
+        var scaleUp = 1.0f
+        if(aspectRatio > 2.0f){
+            scaleUp = (viewHeight / imageHeight)
+        }
+        else if (aspectRatio <= 0.56f){
+            scaleUp = (viewWidth / imageWidth)
+        }
+        if (scaleUp > 0.9f && scaleUp < 1.1f)
             return
 
-        val aspectRatio = imageWidth / imageHeight
-        val scaleUp = 1.0f / (matrixScale)
-        val xToLeft = (imageWidth * scaleUp) / 2
-        val xToRight = (imageWidth * scaleUp) - (viewWidth.toFloat() * 1.15f)
-        val yUp = (imageHeight * scaleUp) / 2
-        val yDown = (imageHeight * scaleUp) - (viewHeight.toFloat() * 2.5f)
+        val xToLeft = (imageWidth * scaleUp) / 3.14f
+        val xToRight = (imageWidth * scaleUp) - (viewWidth.toFloat() / 1.42f * scaleUp)
+        val yUp = (imageHeight * scaleUp) / 3.14f
+        val yDown = (imageHeight * scaleUp) - (viewHeight.toFloat() * 2.0f)
         val zoomDuration = ((config.interval - 1) * 0.1f * 1000).toLong()
         val scrollDuration = ((config.interval - 1) * 0.8f * 1000).toLong()
 
@@ -1386,7 +1389,7 @@ class TouchImageView @JvmOverloads constructor(context: Context, attrs: Attribut
         val scrollHorizontalAction: Runnable = Runnable {
             this@TouchImageView.animate()
                 .setDuration(scrollDuration)
-                .x(xToRight)
+                .x(xToRight * -1)
                 .withEndAction(zoomHorizontalOutAction)
         }
 
@@ -1401,15 +1404,16 @@ class TouchImageView @JvmOverloads constructor(context: Context, attrs: Attribut
             this@TouchImageView.animate()
                 .setDuration(zoomDuration)
                 .scaleY(scaleUp).scaleX(scaleUp)
-                .x(xToLeft * -1)
+                .x(xToLeft)
                 .withEndAction(scrollHorizontalAction)
         }
-        else if (aspectRatio < 0.56f) {
+        else if (aspectRatio <= 0.56f) {
             this@TouchImageView.animate()
                 .setDuration(zoomDuration)
                 .scaleY(scaleUp).scaleX(scaleUp)
                 .y(yUp * -1)
-                .withEndAction(scrollVerticalAction)}
+                .withEndAction(scrollVerticalAction)
+        }
     }
 
     companion object {
