@@ -376,6 +376,9 @@ class MediaSliderView(context: Context) : ConstraintLayout(context) {
                             if (touchImageView!= null && config.zoomAndScrollPanorama && config.interval >= 10 && mainItem.isPanorama) {
                                 touchImageView.zoomAndScrollPanorama(config, sliderItem)
                             }
+                            else if(touchImageView!= null && config.zoomAndScrollPanorama && !mainItem.isPanorama && config.interval >= 3){
+                                touchImageView.zoomAndPanEffect(config, sliderItem)
+                            }
                         }
                         stopPlayer()
                     }

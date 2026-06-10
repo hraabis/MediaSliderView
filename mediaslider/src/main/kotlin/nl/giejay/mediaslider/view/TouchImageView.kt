@@ -1416,6 +1416,36 @@ class TouchImageView @JvmOverloads constructor(context: Context, attrs: Attribut
         }
     }
 
+    fun zoomAndPanEffect(config: MediaSliderConfiguration, sliderItem: SliderItemViewHolder) {
+        val xLimit = (imageWidth * 0.3).toInt()
+        val yLimit = (imageHeight * 0.3).toInt()
+        val rndX = (-1 * xLimit..xLimit).random().toFloat()
+        val rndY = (-1 * yLimit..yLimit).random().toFloat()
+        val rndScale = ((5..170).random().toFloat() / 100.0f) + 1.0f
+        val zoomDuration = (((config.interval - 1) * 0.98f * 1000) - 400).toLong()
+        val rndInOrOut = (0 .. 1).random()
+
+        if(rndInOrOut == 0) {
+            this@TouchImageView.animate()
+                .setDuration(zoomDuration)
+                .scaleY(rndScale).scaleX(rndScale)
+                .x(rndX).y(rndY)
+        }
+        else {
+            val zoomOutAction: Runnable = Runnable {
+                this@TouchImageView.animate()
+                    .setDuration(zoomDuration)
+                    .scaleY(1.0f).scaleX(1.0f)
+                    .x(0.0f).y(0.0f)
+            }
+           this@TouchImageView.animate()
+               .setDuration(400)
+               .scaleY(rndScale).scaleX(rndScale)
+               .x(rndX).y(rndY)
+               .withEndAction(zoomOutAction)
+        }
+    }
+
     companion object {
         private const val DEBUG = "DEBUG"
 
