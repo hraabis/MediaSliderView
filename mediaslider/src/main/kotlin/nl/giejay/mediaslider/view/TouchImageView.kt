@@ -1419,11 +1419,11 @@ class TouchImageView @JvmOverloads constructor(context: Context, attrs: Attribut
     fun zoomAndPanEffect(config: MediaSliderConfiguration, sliderItem: SliderItemViewHolder) {
         val zoomEffectPercent = config.zoomEffectPercent.toFloat() / 100.0f
         val panEffectPercent = config.panEffectPercent.toFloat() / 100.0f
-        val xLimit = (imageWidth * 0.3).toInt()
-        val yLimit = (imageHeight * 0.3).toInt()
+        val xLimit = (imageWidth * 0.5).toInt()
+        val yLimit = (imageHeight * 0.5).toInt()
         val rndX = (-1 * xLimit..xLimit).random().toFloat() * panEffectPercent
         val rndY = (-1 * yLimit..yLimit).random().toFloat() * panEffectPercent
-        val rndScale = ((5..170).random().toFloat() / 100.0f * zoomEffectPercent) + 1.0f
+        val rndScale = ((5..250).random().toFloat() / 100.0f * zoomEffectPercent) + 1.0f
         val zoomDuration = (((config.interval - 1) * 0.98f * 1000) - 400).toLong()
         val rndInOrOut = (0 .. 1).random()
 
