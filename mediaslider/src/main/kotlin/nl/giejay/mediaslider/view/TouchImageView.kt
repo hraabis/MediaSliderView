@@ -1425,9 +1425,9 @@ class TouchImageView @JvmOverloads constructor(context: Context, attrs: Attribut
         val rndY = (-1 * yLimit..yLimit).random().toFloat() * panEffectPercent
         val rndScale = ((50..200).random().toFloat() / 100.0f * zoomEffectPercent) + 1.0f
         val zoomDuration = (((config.interval - 1) * 0.98f * 1000) - 400).toLong()
-        val phase1Duration = (zoomDuration * ((30..65).random().toFloat() / 100.0f)).toLong()
+        val phase1Duration = if(config.interval <= 5) (zoomDuration / 2) else (zoomDuration * ((20..80).random().toFloat() / 100.0f)).toLong()
         val phase2Duration = zoomDuration - phase1Duration
-        val randomAction = (0 .. 3).random()
+        val randomAction = (0 .. 4).random()
 
         fun zoomAndPanRunnable(duration1: Long, scale1: Float, x1: Float, y1: Float, duration2: Long, scale2: Float, x2: Float, y2: Float) {
             val zoomOutAction: Runnable = Runnable {
@@ -1446,17 +1446,21 @@ class TouchImageView @JvmOverloads constructor(context: Context, attrs: Attribut
         when (randomAction) {
             0 -> {
                 //Zoom In
-                zoomAndPanRunnable(0, 1.0f, 1.0f, 1.0f,zoomDuration, rndScale, rndX, rndY, )
+                zoomAndPanRunnable(0, 1.0f, 0.0f, 0.0f,zoomDuration, rndScale, rndX, rndY, )
             }
             1 -> {
                 //Zoom In/Out
-                zoomAndPanRunnable(phase1Duration, rndScale, rndX, rndY, phase2Duration, 1.0f, 1.0f, 1.0f)
+                zoomAndPanRunnable(phase1Duration, rndScale, rndX, rndY, phase2Duration, 1.0f, 0.0f, 0.0f)
             }
             2 -> {
+                //Zoom In and Pan to Center
+                zoomAndPanRunnable(phase1Duration, rndScale, rndX, rndY, phase2Duration, rndScale, 0.0f, 0.0f)
+            }
+            3 -> {
                 //Zoom In and Pan opposite
                 zoomAndPanRunnable(phase1Duration, rndScale, rndX, rndY, phase2Duration, rndScale, -1 * rndX, -1 * rndY)
             }
-            3 -> {
+            4 -> {
                 //Zoom In and to new Random
                 val rndX2 = (-1 * xLimit..xLimit).random().toFloat() * panEffectPercent
                 val rndY2 = (-1 * yLimit..yLimit).random().toFloat() * panEffectPercent
