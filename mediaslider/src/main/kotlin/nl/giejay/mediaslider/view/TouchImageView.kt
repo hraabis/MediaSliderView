@@ -1426,7 +1426,6 @@ class TouchImageView @JvmOverloads constructor(context: Context, attrs: Attribut
         val rndScale = ((5..250).random().toFloat() / 100.0f * zoomEffectPercent) + 1.0f
         val zoomDuration = (((config.interval - 1) * 0.98f * 1000) - 400).toLong()
         val rndInOrOut = (0 .. 1).random()
-
         if(rndInOrOut == 0) {
             this@TouchImageView.animate()
                 .setDuration(zoomDuration)
