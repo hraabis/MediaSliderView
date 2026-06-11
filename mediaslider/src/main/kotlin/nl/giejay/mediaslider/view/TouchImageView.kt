@@ -1418,6 +1418,9 @@ class TouchImageView @JvmOverloads constructor(context: Context, attrs: Attribut
     }
 
     fun zoomAndPanEffect(config: MediaSliderConfiguration, sliderItem: SliderItemViewHolder) {
+        if (!config.isOnlyUseThumbnails && config.interval <= 3)
+            return
+
         val zoomEffectPercent = config.zoomEffectPercent.toFloat() / 100.0f
         val panEffectPercent = config.panEffectPercent.toFloat() / 100.0f
         val xLimit = (imageWidth * 0.5).toInt()
@@ -1425,10 +1428,12 @@ class TouchImageView @JvmOverloads constructor(context: Context, attrs: Attribut
         val rndX = (-1 * xLimit..xLimit).random().toFloat() * panEffectPercent
         val rndY = (-1 * yLimit..yLimit).random().toFloat() * panEffectPercent
         val rndScale = ((50..200).random().toFloat() / 100.0f * zoomEffectPercent) + 1.0f
-        val zoomDuration = (((config.interval - 1) * 0.98f * 1000) - 400).toLong()
-        val phase1Duration = if(config.interval <= 5) (zoomDuration / 2) else (zoomDuration * ((20..80).random().toFloat() / 100.0f)).toLong()
-        val phase2Duration = zoomDuration - phase1Duration
-        val randomAction = (0 .. 6).random()
+        val rndScaleModifier = floatArrayOf(.85f, .90f, .95f, 1f, 1f, 1f, 1f, 1.05f, 1.10f, 1.15f).random()
+        val actionDuration = (config.interval * 0.98f * 1000).toLong()
+        val phase1Duration = if(config.interval <= 5) (actionDuration / 2) else (actionDuration * ((20..80).random().toFloat() / 100.0f)).toLong()
+        val phase2Duration = actionDuration - phase1Duration
+        val onlyUse1PhaseActions = config.interval <= 3
+        val randomAction = if(onlyUse1PhaseActions) (0 .. 2).random() else (0 .. 8).random()
 
         fun zoomAndPanRunnable(duration1: Long, scale1: Float, x1: Float, y1: Float, duration2: Long, scale2: Float, x2: Float, y2: Float) {
             val zoomOutAction: Runnable = Runnable {
@@ -1445,35 +1450,41 @@ class TouchImageView @JvmOverloads constructor(context: Context, attrs: Attribut
         }
 
         when (randomAction) {
-            0 -> {
-                //Zoom In
-                zoomAndPanRunnable(0, 1.0f, 0.0f, 0.0f,zoomDuration, rndScale, rndX, rndY, )
-            }
             1 -> {
-                //Zoom In/Out
-                zoomAndPanRunnable(phase1Duration, rndScale, rndX, rndY, phase2Duration, 1.0f, 0.0f, 0.0f)
+                //Zoom In
+                zoomAndPanRunnable(0, 1.0f, 0.0f, 0.0f,actionDuration, rndScale, rndX, rndY, )
             }
             2 -> {
-                //Zoom In and Pan to Center
-                zoomAndPanRunnable(phase1Duration, rndScale, rndX, rndY, phase2Duration, rndScale, 0.0f, 0.0f)
+                //Zoom Out, if slide animation is 100 or less, and thumbnails are being used below 10 second interval
+                if (config.animationSpeedMillis <= 100 && ((config.isOnlyUseThumbnails && config.interval < 10) || (config.interval >= 10)))
+                    zoomAndPanRunnable(0, rndScale, rndX, rndY, actionDuration, 1.0f, 0.0f, 0.0f)
             }
             3 -> {
-                //Zoom In and Pan opposite
-                zoomAndPanRunnable(phase1Duration, rndScale, rndX, rndY, phase2Duration, rndScale, -1 * rndX, -1 * rndY)
+                //Zoom In and Pan to Center
+                zoomAndPanRunnable(phase1Duration, rndScale, rndX, rndY, phase2Duration, (rndScale * rndScaleModifier), 0.0f, 0.0f)
             }
             4 -> {
+                //Zoom In and Pan opposite XY
+                zoomAndPanRunnable(phase1Duration, rndScale, rndX, rndY, phase2Duration, (rndScale * rndScaleModifier), -1 * rndX, -1 * rndY)
+            }
+            5 -> {
+                //Zoom In and Pan opposite X
+                zoomAndPanRunnable(phase1Duration, rndScale, rndX, rndY, phase2Duration, (rndScale * rndScaleModifier), -1 * rndX, rndY)
+            }
+            6 -> {
+                //Zoom In and Pan opposite Y
+                zoomAndPanRunnable(phase1Duration, rndScale, rndX, rndY, phase2Duration, (rndScale * rndScaleModifier), rndX, -1 * rndY)
+            }
+            7 -> {
                 //Zoom In and to new Random
                 val rndX2 = (-1 * xLimit..xLimit).random().toFloat() * panEffectPercent
                 val rndY2 = (-1 * yLimit..yLimit).random().toFloat() * panEffectPercent
                 val rndScale2 = ((50..200).random().toFloat() / 100.0f * zoomEffectPercent) + 1.0f
                 zoomAndPanRunnable(phase1Duration, rndScale, rndX, rndY, phase2Duration, rndScale2, rndX2, rndY2)
             }
-            5 -> {
+            8 -> {
                 //Zoom In and hold
                 zoomAndPanRunnable(phase1Duration, rndScale, rndX, rndY, phase2Duration, rndScale, rndX, rndY)
-            }
-            6 ->{
-                //Don't Zoom and Pan
             }
         }
     }
