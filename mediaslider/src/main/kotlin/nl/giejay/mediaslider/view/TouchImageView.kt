@@ -1427,7 +1427,7 @@ class TouchImageView @JvmOverloads constructor(context: Context, attrs: Attribut
         val zoomDuration = (((config.interval - 1) * 0.98f * 1000) - 400).toLong()
         val phase1Duration = if(config.interval <= 5) (zoomDuration / 2) else (zoomDuration * ((20..80).random().toFloat() / 100.0f)).toLong()
         val phase2Duration = zoomDuration - phase1Duration
-        val randomAction = (0 .. 4).random()
+        val randomAction = (0 .. 6).random()
 
         fun zoomAndPanRunnable(duration1: Long, scale1: Float, x1: Float, y1: Float, duration2: Long, scale2: Float, x2: Float, y2: Float) {
             val zoomOutAction: Runnable = Runnable {
@@ -1466,6 +1466,13 @@ class TouchImageView @JvmOverloads constructor(context: Context, attrs: Attribut
                 val rndY2 = (-1 * yLimit..yLimit).random().toFloat() * panEffectPercent
                 val rndScale2 = ((50..200).random().toFloat() / 100.0f * zoomEffectPercent) + 1.0f
                 zoomAndPanRunnable(phase1Duration, rndScale, rndX, rndY, phase2Duration, rndScale2, rndX2, rndY2)
+            }
+            5 -> {
+                //Zoom In and hold
+                zoomAndPanRunnable(phase1Duration, rndScale, rndX, rndY, phase2Duration, rndScale, rndX, rndY)
+            }
+            6 ->{
+                //Don't Zoom and Pan
             }
         }
     }
