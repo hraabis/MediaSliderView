@@ -1353,9 +1353,11 @@ class TouchImageView @JvmOverloads constructor(context: Context, attrs: Attribut
         matrix!!.getValues(n)
         Log.d(DEBUG, "Scale: " + n[Matrix.MSCALE_X] + " TransX: " + n[Matrix.MTRANS_X] + " TransY: " + n[Matrix.MTRANS_Y])
     }
+
     private fun getAspectRatio() : Float {
         return imageWidth / imageHeight
     }
+
     private fun getScaleUpToViewBounds(): Float {
         val aspectRatio = getAspectRatio()
         var scaleUp = 1.0f
@@ -1367,53 +1369,45 @@ class TouchImageView @JvmOverloads constructor(context: Context, attrs: Attribut
         }
         return scaleUp
     }
+
+    fun zoomAndPanRunnable(startDelay: Long, duration1: Long, scale1: Float, x1: Float, y1: Float, duration2: Long, scale2: Float, x2: Float, y2: Float, resetZoomAndPan: Boolean, resetDuration: Long) {
+        val resetZoomAndPanAction = Runnable{
+            this@TouchImageView.animate()
+                .setDuration(resetDuration)
+                .scaleY(1.0f).scaleX(1.0f)
+                .x(0.0f).y(0.0f)
+        }
+        val panAction = Runnable {
+            this@TouchImageView.animate()
+                .setDuration(duration2)
+                .scaleY(scale2).scaleX(scale2)
+                .x(x2).y(y2)
+                .withEndAction(if(resetZoomAndPan) resetZoomAndPanAction else null)
+        }
+        this@TouchImageView.animate()
+            .setStartDelay(startDelay)
+            .setDuration(duration1)
+            .scaleY(scale1).scaleX(scale1)
+            .x(x1).y(y1)
+            .withEndAction(panAction)
+    }
+
     public fun zoomAndScrollPanorama(config: MediaSliderConfiguration,model: SliderItemViewHolder) {
-        val aspectRatio = getAspectRatio()
         val scaleUp = getScaleUpToViewBounds()
         if (scaleUp > 0.9f && scaleUp < 1.1f)
             return
 
-        val xToLeft = (imageWidth * scaleUp) / 3.14f
-        val xToRight = (imageWidth * scaleUp) - (viewWidth.toFloat() / 1.42f * scaleUp)
-        val yUp = (imageHeight * scaleUp) / 3.14f
-        val yDown = (imageHeight * scaleUp) - (viewHeight.toFloat() * 2.0f)
-        val zoomDuration = ((config.interval - 1) * 0.1f * 1000).toLong()
-        val scrollDuration = ((config.interval - 1) * 0.8f * 1000).toLong()
-
-        val zoomOutAction: Runnable = Runnable {
-            this@TouchImageView.animate()
-                .setDuration(zoomDuration)
-                .scaleY(1.0f).scaleX(1.0f)
-                .x(0.0f)
-        }
-
-        val scrollHorizontalAction: Runnable = Runnable {
-            this@TouchImageView.animate()
-                .setDuration(scrollDuration)
-                .x(xToRight * -1)
-                .withEndAction(zoomOutAction)
-        }
-
-        val scrollVerticalAction: Runnable = Runnable {
-            this@TouchImageView.animate()
-                .setDuration(scrollDuration)
-                .y(yDown)
-                .withEndAction(zoomOutAction)
-        }
-
+        val xZoomPan = (viewWidth.toFloat() * scaleUp * 0.5f) - (viewWidth.toFloat() * 0.5f)
+        val yZoomPan = (viewHeight.toFloat() * scaleUp * 0.5f) - (viewHeight.toFloat() * 0.5f)
+        val holdOrZoomDuration = ((config.interval - 1).toFloat() * 0.03f * 1000f).toLong()
+        val scrollDuration = ((config.interval - 1).toFloat() * 0.8f * 1000f).toLong()
+        val randomizeDirection = floatArrayOf(-1f,1f).random()
+        val aspectRatio = getAspectRatio()
         if (aspectRatio > 2.0f) {
-            this@TouchImageView.animate()
-                .setDuration(zoomDuration)
-                .scaleY(scaleUp).scaleX(scaleUp)
-                .x(xToLeft)
-                .withEndAction(scrollHorizontalAction)
+            zoomAndPanRunnable(holdOrZoomDuration, holdOrZoomDuration, scaleUp, randomizeDirection*xZoomPan, 0.0f, scrollDuration, scaleUp,-1*randomizeDirection*xZoomPan,0.0f, true, holdOrZoomDuration)
         }
         else if (aspectRatio <= 0.56f) {
-            this@TouchImageView.animate()
-                .setDuration(zoomDuration)
-                .scaleY(scaleUp).scaleX(scaleUp)
-                .y(yUp * -1)
-                .withEndAction(scrollVerticalAction)
+            zoomAndPanRunnable(holdOrZoomDuration,holdOrZoomDuration, scaleUp, 0.0f, -1*randomizeDirection*yZoomPan, scrollDuration, scaleUp,0.0f, randomizeDirection*yZoomPan, true, holdOrZoomDuration)
         }
     }
 
@@ -1469,75 +1463,61 @@ class TouchImageView @JvmOverloads constructor(context: Context, attrs: Attribut
             }
         }
 
-        fun zoomAndPanRunnable(duration1: Long, scale1: Float, x1: Float, y1: Float, duration2: Long, scale2: Float, x2: Float, y2: Float) {
-            val zoomOutAction: Runnable = Runnable {
-                this@TouchImageView.animate()
-                    .setDuration(duration2)
-                    .scaleY(scale2).scaleX(scale2)
-                    .x(x2).y(y2)
-            }
-            this@TouchImageView.animate()
-                .setDuration(duration1)
-                .scaleY(scale1).scaleX(scale1)
-                .x(x1).y(y1)
-                .withEndAction(zoomOutAction)
-        }
-
         if(!canUseZoomOutActions && randomAction == 2)
             randomAction = 1
 
         when (randomAction) {
             1 -> {
                 //Zoom In
-                zoomAndPanRunnable(0, 1.0f, 0.0f, 0.0f,actionDuration, rndScale, rndX, rndY, )
+                zoomAndPanRunnable(0,0, 1.0f, 0.0f, 0.0f,actionDuration, rndScale, rndX, rndY, false, 0)
             }
             2 -> {
                 //Zoom Out
-                zoomAndPanRunnable(0, rndScale, rndX, rndY, actionDuration, 1.0f, 0.0f, 0.0f)
+                zoomAndPanRunnable(0,0, rndScale, rndX, rndY, actionDuration, 1.0f, 0.0f, 0.0f, false,0)
             }
             3 -> {
                 //Zoom In and Pan to Center
-                zoomAndPanRunnable(phase1Duration, rndScale, rndX, rndY, phase2Duration, (rndScale * rndScaleModifier), 0.0f, 0.0f)
+                zoomAndPanRunnable(0,phase1Duration, rndScale, rndX, rndY, phase2Duration, (rndScale * rndScaleModifier), 0.0f, 0.0f, false,0)
             }
             4 -> {
                 //Zoom In and Pan opposite XY
-                zoomAndPanRunnable(phase1Duration, rndScale, rndX, rndY, phase2Duration, (rndScale * rndScaleModifier), -1 * rndX, -1 * rndY)
+                zoomAndPanRunnable(0,phase1Duration, rndScale, rndX, rndY, phase2Duration, (rndScale * rndScaleModifier), -1 * rndX, -1 * rndY, false,0)
             }
             5 -> {
                 //Zoom In and Pan opposite X
-                zoomAndPanRunnable(phase1Duration, rndScale, rndX, rndY, phase2Duration, (rndScale * rndScaleModifier), -1 * rndX, rndY)
+                zoomAndPanRunnable(0,phase1Duration, rndScale, rndX, rndY, phase2Duration, (rndScale * rndScaleModifier), -1 * rndX, rndY, false,0)
             }
             6 -> {
                 //Zoom In and Pan opposite Y
-                zoomAndPanRunnable(phase1Duration, rndScale, rndX, rndY, phase2Duration, (rndScale * rndScaleModifier), rndX, -1 * rndY)
+                zoomAndPanRunnable(0,phase1Duration, rndScale, rndX, rndY, phase2Duration, (rndScale * rndScaleModifier), rndX, -1 * rndY, false,0)
             }
             7 -> {
                 //Zoom In and hold
-                zoomAndPanRunnable(phase1Duration, rndScale, rndX, rndY, phase2Duration, rndScale, rndX, rndY)
+                zoomAndPanRunnable(0,phase1Duration, rndScale, rndX, rndY, phase2Duration, rndScale, rndX, rndY, false,0)
             }
             8 -> {
                 //Zoom In and to new Random
-                zoomAndPanRunnable(phase1Duration, rndScale, rndX, rndY, phase2Duration, rndScale2, rndX2, rndY2)
+                zoomAndPanRunnable(0,phase1Duration, rndScale, rndX, rndY, phase2Duration, rndScale2, rndX2, rndY2, false,0)
             }
             9 -> {
                 //Zoomed In To New Random, if slide animation is 100 or less, and thumbnails are being used below 10 second interval
-                zoomAndPanRunnable(0, rndScale, rndX, rndY, actionDuration, rndScale2, rndX2, rndY2)
+                zoomAndPanRunnable(0,0, rndScale, rndX, rndY, actionDuration, rndScale2, rndX2, rndY2, false,0)
             }
             10 -> {
                 //Zoomed In Pan to Center
-                zoomAndPanRunnable(0, rndScale, rndX, rndY, actionDuration, (rndScale * rndScaleModifier), 0.0f, 0.0f)
+                zoomAndPanRunnable(0,0, rndScale, rndX, rndY, actionDuration, (rndScale * rndScaleModifier), 0.0f, 0.0f, false,0)
             }
             11 -> {
                 //Zoomed In Pan opposite XY
-                zoomAndPanRunnable(0, rndScale, rndX, rndY, actionDuration, (rndScale * rndScaleModifier), -1 * rndX, -1 * rndY)
+                zoomAndPanRunnable(0,0, rndScale, rndX, rndY, actionDuration, (rndScale * rndScaleModifier), -1 * rndX, -1 * rndY, false,0)
             }
             12 -> {
                 //Zoomed In Pan opposite X
-                zoomAndPanRunnable(0, rndScale, rndX, rndY, actionDuration, (rndScale * rndScaleModifier), -1 * rndX, rndY)
+                zoomAndPanRunnable(0,0, rndScale, rndX, rndY, actionDuration, (rndScale * rndScaleModifier), -1 * rndX, rndY, false,0)
             }
             13 -> {
                 //Zoomed In Pan opposite Y
-                zoomAndPanRunnable(0, rndScale, rndX, rndY, actionDuration, (rndScale * rndScaleModifier), rndX, -1 * rndY)
+                zoomAndPanRunnable(0,0, rndScale, rndX, rndY, actionDuration, (rndScale * rndScaleModifier), rndX, -1 * rndY, false,0)
             }
         }
     }
